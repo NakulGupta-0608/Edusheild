@@ -118,7 +118,7 @@ function HomePage() {
             
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link 
-                href="/register-institute" 
+                href="/admin/register-institute" 
                 className="group flex h-12 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-8 font-medium text-white transition-all hover:bg-blue-700 hover:shadow-lg sm:w-auto"
               >
                 Register Institute

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "demo",
+  api_key: process.env.CLOUDINARY_API_KEY || "12345",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "12345",
+});
 
 export async function POST(req: Request) {
   try {
@@ -14,20 +19,26 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create a unique filename
-    const filename = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-    const dir = path.join(process.cwd(), "public", "uploads");
+    // Using Cloudinary instead of local Multer/fs combo
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { resource_type: "auto", folder: "edusheild" },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      );
+      uploadStream.end(buffer);
+    });
 
-    // Ensure directory exists
-    await mkdir(dir, { recursive: true });
+    // Return the secure Cloudinary URL
+    return NextResponse.json({ 
+      success: true, 
+      url: (uploadResult as any).secure_url 
+    });
 
-    const filepath = path.join(dir, filename);
-    await writeFile(filepath, buffer);
-
-    // Return the public URL for the file to the frontend
-    return NextResponse.json({ success: true, url: `/uploads/${filename}` });
   } catch (error) {
-    console.error("File upload error:", error);
-    return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
+    console.error("Cloudinary upload error:", error);
+    return NextResponse.json({ success: false, error: "Cloudinary upload failed" }, { status: 500 });
   }
 }

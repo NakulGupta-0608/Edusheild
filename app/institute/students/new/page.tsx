@@ -25,6 +25,8 @@ export default function RegisterStudent() {
     photoUrl: ""
   });
 
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setFormData(prev => ({ ...prev, aadhaarNumber: val }));
@@ -109,6 +111,7 @@ export default function RegisterStudent() {
             onClick={() => {
               setSuccess(false);
               setFormData({ name: "", aadhaarNumber: "", dob: "", qualification: "", course: "", guardianName: "", guardianContact: "", photoUrl: "" });
+              setPhotoPreview(null);
             }}
             className="px-6 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors"
           >
@@ -178,7 +181,12 @@ export default function RegisterStudent() {
                       placeholder="e.g. Aashiya Khan"
                     />
                   </div>
-                  <label className="cursor-pointer whitespace-nowrap px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center">
+                  <label className="cursor-pointer whitespace-nowrap px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    {photoPreview ? (
+                      <div className="h-8 w-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                        <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                    ) : null}
                     <span>{formData.photoUrl ? "Photo Uploaded ✓" : "Upload Photo"}</span>
                     <input 
                       type="file" 
@@ -187,6 +195,10 @@ export default function RegisterStudent() {
                       onChange={async (e) => { 
                         if (e.target.files && e.target.files.length > 0) {
                            const file = e.target.files[0];
+                           // Step 2: Preview
+                           setPhotoPreview(URL.createObjectURL(file));
+
+                           // Step 3: FormData Submitting
                            const form = new FormData();
                            form.append("file", file);
                            try {

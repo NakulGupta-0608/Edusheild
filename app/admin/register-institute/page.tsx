@@ -39,6 +39,7 @@ export default function RegisterInstituteForm() {
   };
 
   const [formData, setFormData] = useState(defaultFormData);
+  const [ownerPhotoPreview, setOwnerPhotoPreview] = useState<string | null>(null);
 
   const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -71,9 +72,16 @@ export default function RegisterInstituteForm() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void, isOwnerPhoto = false) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      
+      // Step 2: Show preview immediately
+      if (isOwnerPhoto) {
+        setOwnerPhotoPreview(URL.createObjectURL(file));
+      }
+
+      // Step 3: Upload
       const form = new FormData();
       form.append("file", file);
       try {
@@ -245,14 +253,21 @@ export default function RegisterInstituteForm() {
               </div>
 
               <div className="sm:col-span-2 flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg">
-                <div>
-                  <h4 className="text-sm font-medium text-neutral-900">Owner Passport Photo</h4>
-                  <p className="text-xs text-neutral-500 mt-1">Clear recent photograph max 2MB</p>
+                <div className="flex items-center gap-4">
+                  {ownerPhotoPreview && (
+                    <div className="h-12 w-12 rounded-full overflow-hidden border border-neutral-200 shrink-0">
+                      <img src={ownerPhotoPreview} alt="Owner Preview" className="h-full w-full object-cover" />
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-900">Owner Passport Photo</h4>
+                    <p className="text-xs text-neutral-500 mt-1">Clear recent photograph max 2MB</p>
+                  </div>
                 </div>
                 <label className="cursor-pointer px-4 py-2 bg-neutral-100 text-sm font-medium rounded-md hover:bg-neutral-200">
-                  <span>{formData.ownerDetails.photoUrl && formData.ownerDetails.photoUrl.startsWith('/') ? "Uploaded ✓" : "Upload Image"}</span>
+                  <span>{formData.ownerDetails.photoUrl && formData.ownerDetails.photoUrl.startsWith('http') ? "Uploaded ✓" : formData.ownerDetails.photoUrl ? "Uploaded ✓" : "Upload Image"}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => 
-                    handleFileUpload(e, (url) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, photoUrl: url}}))
+                    handleFileUpload(e, (url) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, photoUrl: url}}), true)
                   } />
                 </label>
               </div>
@@ -522,6 +537,7 @@ export default function RegisterInstituteForm() {
               onClick={() => {
                 setSuccess(false);
                 setFormData(defaultFormData);
+                setOwnerPhotoPreview(null);
               }}
               className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-6 py-2.5 rounded-lg transition-colors"
             >

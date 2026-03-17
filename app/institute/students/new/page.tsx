@@ -48,11 +48,28 @@ export default function RegisterStudent() {
       return;
     }
 
-    // Simulate API Call for Prototype
-    setTimeout(() => {
+    // API Call
+    try {
+      const response = await fetch('/api/students/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to enroll student');
+        setLoading(false);
+        return;
+      }
+
       setSuccess(true);
+    } catch (err: any) {
+      setError('An error occurred during registration');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   if (success) {

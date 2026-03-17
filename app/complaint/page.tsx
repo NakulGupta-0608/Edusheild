@@ -10,7 +10,8 @@ export default function ComplaintPortal() {
   const [success, setSuccess] = useState(false);
   
   const [formData, setFormData] = useState({
-    instituteName: "",
+    type: "COMPLAINT",
+    instituteNameText: "",
     category: "",
     description: "",
     complainantType: "STUDENT",
@@ -23,11 +24,33 @@ export default function ComplaintPortal() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API Call for Prototype
-    setTimeout(() => {
-      setSuccess(true);
+    try {
+      const res = await fetch('/api/complaints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: formData.type,
+          complainantType: formData.complainantType,
+          complainantName: formData.isAnonymous ? 'Anonymous' : formData.name,
+          complainantContact: formData.isAnonymous ? '' : formData.contact,
+          instituteNameText: formData.instituteNameText,
+          category: formData.category,
+          description: formData.description
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccess(true);
+      } else {
+        alert(data.error || 'Something went wrong');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Failed to submit. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -57,9 +80,11 @@ export default function ComplaintPortal() {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 mb-6">
               <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Complaint Submitted Securely</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              {formData.type === 'SUGGESTION' ? 'Suggestion' : 'Complaint'} Submitted Securely
+            </h2>
             <p className="text-slate-600 mb-8 max-w-md mx-auto">
-              Your grievance has been securely logged and forwarded to the Ministry compliance authorities for immediate review. 
+              Your {formData.type === 'SUGGESTION' ? 'suggestion' : 'grievance'} has been securely logged and forwarded to the Ministry compliance authorities for immediate review. 
               {formData.isAnonymous && " Your identity has been completely obfuscated."}
             </p>
             
@@ -99,6 +124,24 @@ export default function ComplaintPortal() {
             >
               <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-8">
                 
+                {/* Type Selection */}
+                <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, type: 'COMPLAINT'})}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${formData.type === 'COMPLAINT' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Submit a Complaint
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, type: 'SUGGESTION'})}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${formData.type === 'SUGGESTION' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Make a Suggestion
+                  </button>
+                </div>
+                
                 {/* Institute Info */}
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-100 pb-2">1. Incident Context</h3>
@@ -108,8 +151,8 @@ export default function ComplaintPortal() {
                     <input
                       type="text"
                       required
-                      value={formData.instituteName}
-                      onChange={(e) => setFormData({...formData, instituteName: e.target.value})}
+                      value={formData.instituteNameText}
+                      onChange={(e) => setFormData({...formData, instituteNameText: e.target.value})}
                       className="w-full rounded-lg border border-slate-300 py-3 px-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-colors"
                       placeholder="e.g. Apex Classes, Sector 14, Gurugram"
                     />
@@ -126,10 +169,10 @@ export default function ComplaintPortal() {
                       >
                         <option value="" disabled>Select the violation category...</option>
                         <option value="OVERCROWDING">Severe Overcrowding in Classroom</option>
-                        <option value="SAFETY">Lack of Fire Exits / Unsafe Building</option>
-                        <option value="INFRASTRUCTURE">Poor Facilities (No ventilation/water)</option>
-                        <option value="FEES">Unfair Fees / Refusal of Refund</option>
-                        <option value="UNQUALIFIED_STAFF">Unqualified Tutors / Misconduct</option>
+                        <option value="FIRE">Lack of Fire Exits / Safety</option>
+                        <option value="WATER">Poor Water Supply Facility</option>
+                        <option value="FACILITIES">Poor General Facilities</option>
+                        <option value="SAFETY">Other Safety Concerns</option>
                         <option value="OTHER">Other Guideline Breach</option>
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">

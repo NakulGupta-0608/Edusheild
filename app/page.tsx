@@ -154,7 +154,7 @@ function HomePage() {
                 <p className="text-neutral-600 mb-6 font-medium text-sm">
                   Register your coaching center, upload infrastructure AI verifications, and manage student capacity.
                 </p>
-                <Link href="/institute/login" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
+                <Link href="/login" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
                   Enter Portal <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </div>
@@ -168,7 +168,7 @@ function HomePage() {
                 <p className="text-neutral-600 mb-6 font-medium text-sm">
                   Monitor all registered institutes, approve registrations, review AI flagged risks, and handle complaints.
                 </p>
-                <Link href="/admin/login" className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+                <Link href="/login" className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                   Enter Portal <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </div>

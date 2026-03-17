@@ -48,7 +48,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // @ts-ignore
         token.role = user.role;
+        // @ts-ignore
         token.instituteId = user.instituteId;
       }
       return token;

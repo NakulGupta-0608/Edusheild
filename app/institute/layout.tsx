@@ -66,7 +66,7 @@ export default function InstituteLayout({
             </div>
             <div className="flex flex-col max-w-[140px]">
               <span className="text-sm font-semibold truncate">{session?.user?.name || "Institute"}</span>
-              <span className="text-xs text-slate-500 font-medium">ID: {/* @ts-ignore */ session?.user?.instituteId || "INS-XXXX"}</span>
+              <span className="text-xs text-slate-500 font-medium">ID: {(session?.user as any)?.instituteId || "INS-XXXX"}</span>
             </div>
           </div>
           <button

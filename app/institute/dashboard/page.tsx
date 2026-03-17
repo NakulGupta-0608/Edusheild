@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { motion } from "framer-motion";
 import { 
   Users, 
@@ -10,16 +12,49 @@ import {
   ArrowRight,
   TrendingUp,
   FileCheck2,
-  CheckCircle2
+  CheckCircle2,
+  Building2
 } from "lucide-react";
 import Link from "next/link";
 
 export default function InstituteDashboard() {
 
-  // Mock data representing the institute's current capacity and compliance status
-  const maxCapacity = 450;
-  const currentStudents = 380;
-  const capacityPercentage = Math.round((currentStudents / maxCapacity) * 100);
+  const [profile, setProfile] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/institutes/me').then(res => res.json()),
+      fetch('/api/students/list').then(res => res.json())
+    ])
+    .then(([profileData, studentsData]) => {
+      if (profileData.success) {
+        setProfile(profileData.data);
+      }
+      if (studentsData.success) {
+        setStudents(studentsData.data);
+      }
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center py-20"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>;
+  }
+
+  if (!profile) {
+    return <div className="text-center py-20 text-red-500">Failed to load profile.</div>;
+  }
+
+  // Live data representing the institute's current capacity and compliance status
+  const maxCapacity = profile.capacity?.maxAllowed || 0;
+  const currentStudents = profile.capacity?.currentlyEnrolled || 0;
+  const capacityPercentage = maxCapacity > 0 ? Math.round((currentStudents / maxCapacity) * 100) : 0;
   
   // Status logic based on guidelines
   const isNearCapacity = capacityPercentage >= 90;
@@ -45,11 +80,7 @@ export default function InstituteDashboard() {
     { name: "CCTV/Security Audit", status: "Pending", date: "-", type: "Inspection" },
   ];
 
-  const recentStudents = [
-    { id: "STU-9921", name: "Rahul Sharma", course: "JEE Advanced", date: "Today" },
-    { id: "STU-9920", name: "Ananya Patel", course: "NEET Prep", date: "Yesterday" },
-    { id: "STU-9919", name: "Vikram Singh", course: "Foundation X", date: "Yesterday" },
-  ];
+
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -140,19 +171,27 @@ export default function InstituteDashboard() {
               <Building2 className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900">Pinnacle Classes</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">ID: INS-1049</p>
+              <h3 className="font-bold text-slate-900">{profile.name}</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">ID: {profile.instituteId}</p>
             </div>
           </div>
           
           <div className="space-y-4">
             <div className="flex items-start gap-3 text-sm">
               <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-              <span className="text-slate-600">4th Floor, Skyline Building, Kormangala, Bangalore 560034</span>
+              <span className="text-slate-600">
+                {profile.address?.street}, {profile.address?.city}, {profile.address?.state} {profile.address?.pincode}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-slate-600 font-medium">Verification Status: <span className="text-emerald-600 font-bold">Approved</span></span>
+              {profile.riskStatus === 'SAFE' && <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />}
+              {profile.riskStatus === 'PENDING_REGISTRATION' && <CheckCircle2 className="h-4 w-4 text-slate-500 shrink-0" />}
+              {(profile.riskStatus === 'WARNING' || profile.riskStatus === 'UNSAFE') && <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />}
+              <span className="text-slate-600 font-medium">Verification Status: 
+                <span className={`font-bold ml-1 ${profile.riskStatus === 'SAFE' ? 'text-emerald-600' : profile.riskStatus === 'PENDING_REGISTRATION' ? 'text-slate-600' : 'text-red-600'}`}>
+                  {profile.riskStatus.replace('_', ' ')}
+                </span>
+              </span>
             </div>
           </div>
         </motion.div>
@@ -206,20 +245,25 @@ export default function InstituteDashboard() {
           </div>
           <div className="p-6 flex-1 flex flex-col">
             <div className="space-y-4 flex-1">
-              {recentStudents.map((student) => (
-                <div key={student.id} className="flex items-center justify-between">
+              {students.slice(0, 3).map((student) => (
+                <div key={student._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-sm">
+                    <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-sm uppercase">
                       {student.name.charAt(0)}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900">{student.name}</p>
-                      <p className="text-xs text-slate-500">{student.course} • Age Verified</p>
+                      <p className="text-xs text-slate-500">{student.courseEnrolled} • {student.age} yrs old</p>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">{student.date}</span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {new Date(student.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               ))}
+              {students.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-4">No students enrolled yet.</p>
+              )}
             </div>
             <Link 
               href="/institute/students/new"

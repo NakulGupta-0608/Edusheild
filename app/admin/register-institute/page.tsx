@@ -12,34 +12,46 @@ export default function RegisterInstituteForm() {
   const [generatedPass, setGeneratedPass] = useState("");
   const [copied, setCopied] = useState(false);
   
-  // Form State
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     name: "",
     ownerName: "",
     email: "",
     contact: "",
-  });
+    address: { street: "", city: "", state: "", pincode: "" },
+    infrastructure: { totalArea: "", totalClassrooms: "", classroomDimensions: "" },
+    facilities: { drinkingWater: false, separateToilets: false, cctvInstalled: false, firstAid: false },
+    capacity: { maxAllowed: "" }
+  };
+
+  // Form State
+  const [formData, setFormData] = useState(defaultFormData);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API Call for Prototype
-    setTimeout(() => {
-      // Logic to happen when connecting to Mongoose:
-      // 1. Generate random secure ID and Password
-      // 2. Hash Password
-      // 3. Save Institute record as 'PENDING_REGISTRATION' status
-      // 4. Return plain credentials to admin
-      
-      const newId = `INS-${Math.floor(1000 + Math.random() * 9000)}`;
-      const newPass = Math.random().toString(36).slice(-8);
-      
-      setGeneratedId(newId);
-      setGeneratedPass(newPass);
-      setSuccess(true);
+    try {
+      const response = await fetch('/api/institutes/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setGeneratedId(data.data.instituteId);
+        setGeneratedPass(data.data.password);
+        setSuccess(true);
+      } else {
+        alert(data.error || 'Failed to register institute');
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+      alert('An error occurred during registration. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const copyCredentials = () => {
@@ -113,6 +125,9 @@ export default function RegisterInstituteForm() {
                   <input
                     type="tel"
                     required
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    title="Please enter exactly 10 digits"
                     value={formData.contact}
                     onChange={(e) => setFormData({...formData, contact: e.target.value})}
                     className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -128,9 +143,104 @@ export default function RegisterInstituteForm() {
                   <input
                     type="email"
                     required
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    title="Please enter a valid email address"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <hr className="border-neutral-100 my-2" />
+                <h3 className="text-sm font-semibold text-neutral-900 mt-4 mb-2">Location & Address</h3>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Street Address</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.address.street}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, street: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">City</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.address.city}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, city: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">State</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.address.state}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, state: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Pincode</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    title="Please enter a valid 6-digit pincode"
+                    value={formData.address.pincode}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, pincode: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <hr className="border-neutral-100 my-2" />
+                <h3 className="text-sm font-semibold text-neutral-900 mt-4 mb-2">Infrastructure & Capacity</h3>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Total Area (sq ft)</label>
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={formData.infrastructure.totalArea}
+                    onChange={(e) => setFormData({...formData, infrastructure: {...formData.infrastructure, totalArea: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Max Allowed Students (Capacity)</label>
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={formData.capacity.maxAllowed}
+                    onChange={(e) => setFormData({...formData, capacity: {maxAllowed: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>
               </div>
@@ -140,7 +250,7 @@ export default function RegisterInstituteForm() {
               <button
                 type="button"
                 className="text-sm font-semibold leading-6 text-neutral-900 px-4 py-2 hover:bg-neutral-50 rounded-md transition-colors"
-                onClick={() => setFormData({ name: "", ownerName: "", email: "", contact: "" })}
+                onClick={() => setFormData(defaultFormData)}
               >
                 Reset
               </button>
@@ -207,7 +317,7 @@ export default function RegisterInstituteForm() {
             <button 
               onClick={() => {
                 setSuccess(false);
-                setFormData({ name: "", ownerName: "", email: "", contact: "" });
+                setFormData(defaultFormData);
               }}
               className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-6 py-2.5 rounded-lg transition-colors"
             >

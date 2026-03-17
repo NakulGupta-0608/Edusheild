@@ -7,9 +7,10 @@ const ComplaintSchema = new mongoose.Schema({
   complainantType: { type: String, enum: ['STUDENT', 'PARENT', 'PUBLIC'], required: true },
   complainantName: { type: String }, // Can be anonymous
   complainantContact: { type: String },
+  type: { type: String, enum: ['COMPLAINT', 'SUGGESTION'], required: true, default: 'COMPLAINT' },
   category: { 
     type: String, 
-    enum: ['INFRASTRUCTURE', 'FEES', 'SAFETY', 'OVERCROWDING', 'UNQUALIFIED_STAFF', 'OTHER'],
+    enum: ['FIRE', 'OVERCROWDING', 'WATER', 'FACILITIES', 'SAFETY', 'OTHER'],
     required: true
   },
   description: { type: String, required: true },

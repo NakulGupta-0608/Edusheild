@@ -51,6 +51,12 @@ export default function RegisterInstituteForm() {
 
   const sendOTP = async (type: "Email" | "Phone", identifier: string) => {
     if (!identifier) return alert(`Please enter your ${type}`);
+    
+    // Check if it is a gmail address
+    if (type === "Email" && !identifier.toLowerCase().endsWith("@gmail.com")) {
+      return alert("Only @gmail.com email addresses are allowed.");
+    }
+
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -96,44 +102,26 @@ export default function RegisterInstituteForm() {
       try {
         const res = await fetch(`https://api.postalpincode.in/pincode/${value}`);
         const data = await res.json();
+        
         if (data && data[0] && data[0].Status === 'Success') {
+          // The API returns an array of PostOffices, grab the first one
           const postOffice = data[0].PostOffice[0];
+          
           setFormData(prev => ({
             ...prev,
             address: {
               ...prev.address,
-              pincode: value, // Ensure it's not lost
+              pincode: value,
               areaLocality: postOffice.Name || "",
-              city: postOffice.District || postOffice.Region || postOffice.Block || "",
+              city: postOffice.District || postOffice.Block || postOffice.Region || "",
               state: postOffice.State || "Uttar Pradesh"
             }
           }));
         } else {
-          throw new Error("Pincode API failed, trying fallback");
+          console.log("Pincode API Success status failed", data);
         }
       } catch (error) {
-        console.log("Primary API failed, trying fallback", error);
-        try {
-          const fbRes = await fetch(`https://api.zippopotam.us/IN/${value}`);
-          if (fbRes.ok) {
-            const fbData = await fbRes.json();
-            const place = fbData.places[0];
-            setFormData(prev => ({
-               ...prev,
-               address: {
-                 ...prev.address,
-                 pincode: value, // Ensure it's not lost
-                 areaLocality: place["place name"] || "",
-                 city: place["state district"] || place["place name"] || "",
-                 state: place["state"] || "Uttar Pradesh"
-               }
-            }));
-          } else {
-            console.log("No data found for this Pincode");
-          }
-        } catch (err) {
-          console.log("Network error fetching pincode data", err);
-        }
+        console.error("API Fetch Error:", error);
       }
     }
   };

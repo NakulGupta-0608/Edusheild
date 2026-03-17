@@ -16,9 +16,15 @@ export default function ForgotPassword() {
 
   const requestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if it is a gmail address
+    const isEmail = identifier.includes("@");
+    if (isEmail && !identifier.toLowerCase().endsWith("@gmail.com")) {
+      return alert("Only @gmail.com email addresses are allowed.");
+    }
+
     setLoading(true);
     try {
-      const isEmail = identifier.includes("@");
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

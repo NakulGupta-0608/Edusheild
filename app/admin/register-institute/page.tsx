@@ -60,6 +60,7 @@ export default function RegisterInstituteForm() {
             ...prev,
             address: {
               ...prev.address,
+              areaLocality: postOffice.Name,
               city: postOffice.District || postOffice.Block || postOffice.Name,
               state: postOffice.State || "Uttar Pradesh",
               pincode: value

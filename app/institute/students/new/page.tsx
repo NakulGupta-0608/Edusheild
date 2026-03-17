@@ -179,14 +179,23 @@ export default function RegisterStudent() {
                     />
                   </div>
                   <label className="cursor-pointer whitespace-nowrap px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center">
-                    <span>Upload Photo</span>
+                    <span>{formData.photoUrl ? "Photo Uploaded ✓" : "Upload Photo"}</span>
                     <input 
                       type="file" 
                       accept="image/*" 
                       className="hidden" 
-                      onChange={(e) => { 
+                      onChange={async (e) => { 
                         if (e.target.files && e.target.files.length > 0) {
-                           setFormData({...formData, photoUrl: e.target.files[0].name });
+                           const file = e.target.files[0];
+                           const form = new FormData();
+                           form.append("file", file);
+                           try {
+                             const res = await fetch("/api/upload", { method: "POST", body: form });
+                             const data = await res.json();
+                             if (data.success) setFormData({...formData, photoUrl: data.url });
+                           } catch (err) {
+                             alert("Failed to upload photo");
+                           }
                         }
                       }} 
                     />

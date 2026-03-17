@@ -71,6 +71,21 @@ export default function RegisterInstituteForm() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const form = new FormData();
+      form.append("file", file);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const data = await res.json();
+        if (data.success) callback(data.url);
+      } catch (err) {
+        alert("Upload failed");
+      }
+    }
+  };
+
   const handleAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const area = Number(e.target.value) || 0;
     setFormData(prev => ({
@@ -235,12 +250,10 @@ export default function RegisterInstituteForm() {
                   <p className="text-xs text-neutral-500 mt-1">Clear recent photograph max 2MB</p>
                 </div>
                 <label className="cursor-pointer px-4 py-2 bg-neutral-100 text-sm font-medium rounded-md hover:bg-neutral-200">
-                  <span>Upload Image</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setFormData({...formData, ownerDetails: {...formData.ownerDetails, photoUrl: e.target.files[0].name}});
-                    }
-                  }} />
+                  <span>{formData.ownerDetails.photoUrl && formData.ownerDetails.photoUrl.startsWith('/') ? "Uploaded ✓" : "Upload Image"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => 
+                    handleFileUpload(e, (url) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, photoUrl: url}}))
+                  } />
                 </label>
               </div>
 
@@ -363,14 +376,22 @@ export default function RegisterInstituteForm() {
                 <h3 className="text-sm font-semibold text-neutral-900 mb-4">Mandatory Certificate Uploads</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
-                    <span className="text-sm font-medium text-neutral-700">Fire Safety Certificate (PDF)</span>
+                    <span className="text-sm font-medium text-neutral-700">{formData.safetyCertificates[0].url.startsWith('/') ? "Fire Safety (Uploaded ✓)" : "Fire Safety Certificate (PDF)"}</span>
                     <Upload className="h-4 w-4 text-neutral-500" />
-                    <input type="file" accept="application/pdf" className="hidden" />
+                    <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, (url) => {
+                        const updated = [...formData.safetyCertificates];
+                        updated[0].url = url;
+                        setFormData({...formData, safetyCertificates: updated});
+                    })}/>
                   </label>
                   <label className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
-                    <span className="text-sm font-medium text-neutral-700">Building Safety Certificate (PDF)</span>
+                    <span className="text-sm font-medium text-neutral-700">{formData.safetyCertificates[1].url.startsWith('/') ? "Building Safety (Uploaded ✓)" : "Building Safety Certificate (PDF)"}</span>
                     <Upload className="h-4 w-4 text-neutral-500" />
-                    <input type="file" accept="application/pdf" className="hidden" />
+                    <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, (url) => {
+                        const updated = [...formData.safetyCertificates];
+                        updated[1].url = url;
+                        setFormData({...formData, safetyCertificates: updated});
+                    })}/>
                   </label>
                 </div>
               </div>
@@ -394,7 +415,9 @@ export default function RegisterInstituteForm() {
                         </label>
                         <label className="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 underline">
                           Add Photo
-                          <input type="file" accept="image/*" className="hidden" />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, (url) => {
+                            setFormData({...formData, facilities: {...formData.facilities, facilityPhotos: [...formData.facilities.facilityPhotos, url]}});
+                          })}/>
                         </label>
                       </div>
                     );

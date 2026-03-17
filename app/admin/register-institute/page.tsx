@@ -60,15 +60,38 @@ export default function RegisterInstituteForm() {
             ...prev,
             address: {
               ...prev.address,
-              areaLocality: postOffice.Name,
-              city: postOffice.District || postOffice.Block || postOffice.Name,
+              areaLocality: postOffice.Name || "",
+              city: postOffice.District || postOffice.Region || postOffice.Block || "",
               state: postOffice.State || "Uttar Pradesh",
               pincode: value
             }
           }));
+        } else {
+          throw new Error("Pincode API failed, trying fallback");
         }
       } catch (error) {
-        console.error("Failed to fetch pincode details", error);
+        console.error("Primary API failed, trying fallback", error);
+        try {
+          const fbRes = await fetch(`https://api.zippopotam.us/IN/${value}`);
+          if (fbRes.ok) {
+            const fbData = await fbRes.json();
+            const place = fbData.places[0];
+            setFormData(prev => ({
+               ...prev,
+               address: {
+                 ...prev.address,
+                 areaLocality: place["place name"] || "",
+                 city: place["state district"] || place["place name"] || "",
+                 state: place["state"] || "Uttar Pradesh",
+                 pincode: value
+               }
+            }));
+          } else {
+            alert("No data found for this Pincode. Please enter details manually.");
+          }
+        } catch (err) {
+          alert("Network error fetching pincode data. Please enter details manually.");
+        }
       }
     }
   };

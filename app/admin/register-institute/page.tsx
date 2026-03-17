@@ -26,6 +26,38 @@ export default function RegisterInstituteForm() {
   // Form State
   const [formData, setFormData] = useState(defaultFormData);
 
+  const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow only digits
+    if (!/^\d*$/.test(value)) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      address: { ...prev.address, pincode: value }
+    }));
+
+    if (value.length === 6) {
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${value}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success') {
+          const postOffice = data[0].PostOffice[0];
+          setFormData(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              city: postOffice.District || postOffice.Block || postOffice.Name,
+              state: postOffice.State,
+              pincode: value
+            }
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch pincode details", error);
+      }
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -197,7 +229,7 @@ export default function RegisterInstituteForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">Pincode</label>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Pincode (Auto-fills City & State)</label>
                 <div className="mt-2">
                   <input
                     type="text"
@@ -206,7 +238,7 @@ export default function RegisterInstituteForm() {
                     maxLength={6}
                     title="Please enter a valid 6-digit pincode"
                     value={formData.address.pincode}
-                    onChange={(e) => setFormData({...formData, address: {...formData.address, pincode: e.target.value}})}
+                    onChange={handlePincodeChange}
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>

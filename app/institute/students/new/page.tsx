@@ -178,13 +178,19 @@ export default function RegisterStudent() {
                       placeholder="e.g. Aashiya Khan"
                     />
                   </div>
-                  <button 
-                    type="button" 
-                    onClick={() => alert("Mock Photo Uploaded")}
-                    className="whitespace-nowrap px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    Upload Photo
-                  </button>
+                  <label className="cursor-pointer whitespace-nowrap px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center">
+                    <span>Upload Photo</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => { 
+                        if (e.target.files && e.target.files.length > 0) {
+                           setFormData({...formData, photoUrl: e.target.files[0].name });
+                        }
+                      }} 
+                    />
+                  </label>
                 </div>
               </div>
 

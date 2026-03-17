@@ -234,9 +234,14 @@ export default function RegisterInstituteForm() {
                   <h4 className="text-sm font-medium text-neutral-900">Owner Passport Photo</h4>
                   <p className="text-xs text-neutral-500 mt-1">Clear recent photograph max 2MB</p>
                 </div>
-                <button type="button" onClick={() => mockUpload('Photo')} className="px-4 py-2 bg-neutral-100 text-sm font-medium rounded-md hover:bg-neutral-200">
-                  Upload Image
-                </button>
+                <label className="cursor-pointer px-4 py-2 bg-neutral-100 text-sm font-medium rounded-md hover:bg-neutral-200">
+                  <span>Upload Image</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setFormData({...formData, ownerDetails: {...formData.ownerDetails, photoUrl: e.target.files[0].name}});
+                    }
+                  }} />
+                </label>
               </div>
 
               <div className="sm:col-span-2">
@@ -357,14 +362,16 @@ export default function RegisterInstituteForm() {
               <div className="sm:col-span-2">
                 <h3 className="text-sm font-semibold text-neutral-900 mb-4">Mandatory Certificate Uploads</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer" onClick={() => mockUpload('Fire Safety')}>
+                  <label className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
                     <span className="text-sm font-medium text-neutral-700">Fire Safety Certificate (PDF)</span>
                     <Upload className="h-4 w-4 text-neutral-500" />
-                  </div>
-                  <div className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer" onClick={() => mockUpload('Building Safety')}>
+                    <input type="file" accept="application/pdf" className="hidden" />
+                  </label>
+                  <label className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
                     <span className="text-sm font-medium text-neutral-700">Building Safety Certificate (PDF)</span>
                     <Upload className="h-4 w-4 text-neutral-500" />
-                  </div>
+                    <input type="file" accept="application/pdf" className="hidden" />
+                  </label>
                 </div>
               </div>
 
@@ -385,7 +392,10 @@ export default function RegisterInstituteForm() {
                           />
                           {facility} Required
                         </label>
-                        <button type="button" onClick={() => mockUpload(`${facility} Photo`)} className="text-xs text-indigo-600 hover:text-indigo-800 underline">Add Photo</button>
+                        <label className="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 underline">
+                          Add Photo
+                          <input type="file" accept="image/*" className="hidden" />
+                        </label>
                       </div>
                     );
                   })}

@@ -100,12 +100,11 @@ export default function RegisterInstituteForm() {
 
     if (value.length === 6) {
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${value}`);
-        const data = await res.json();
+        const res = await fetch(`/api/pincode/${value}`);
+        const result = await res.json();
         
-        if (data && data[0] && data[0].Status === 'Success') {
-          // The API returns an array of PostOffices, grab the first one
-          const postOffice = data[0].PostOffice[0];
+        if (result.success && result.data) {
+          const postOffice = result.data;
           
           setFormData(prev => ({
             ...prev,
@@ -118,7 +117,7 @@ export default function RegisterInstituteForm() {
             }
           }));
         } else {
-          console.log("Pincode API Success status failed", data);
+          console.log("Pincode API failed", result.error);
         }
       } catch (error) {
         console.error("API Fetch Error:", error);

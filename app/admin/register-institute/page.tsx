@@ -86,6 +86,7 @@ export default function RegisterInstituteForm() {
     const value = e.target.value;
     if (!/^\d*$/.test(value)) return;
     
+    // Immediately update the pincode strictly
     setFormData(prev => ({
       ...prev,
       address: { ...prev.address, pincode: value }
@@ -101,17 +102,17 @@ export default function RegisterInstituteForm() {
             ...prev,
             address: {
               ...prev.address,
+              pincode: value, // Ensure it's not lost
               areaLocality: postOffice.Name || "",
               city: postOffice.District || postOffice.Region || postOffice.Block || "",
-              state: postOffice.State || "Uttar Pradesh",
-              pincode: value
+              state: postOffice.State || "Uttar Pradesh"
             }
           }));
         } else {
           throw new Error("Pincode API failed, trying fallback");
         }
       } catch (error) {
-        console.error("Primary API failed, trying fallback", error);
+        console.log("Primary API failed, trying fallback", error);
         try {
           const fbRes = await fetch(`https://api.zippopotam.us/IN/${value}`);
           if (fbRes.ok) {
@@ -121,17 +122,17 @@ export default function RegisterInstituteForm() {
                ...prev,
                address: {
                  ...prev.address,
+                 pincode: value, // Ensure it's not lost
                  areaLocality: place["place name"] || "",
                  city: place["state district"] || place["place name"] || "",
-                 state: place["state"] || "Uttar Pradesh",
-                 pincode: value
+                 state: place["state"] || "Uttar Pradesh"
                }
             }));
           } else {
-            alert("No data found for this Pincode. Please enter details manually.");
+            console.log("No data found for this Pincode");
           }
         } catch (err) {
-          alert("Network error fetching pincode data. Please enter details manually.");
+          console.log("Network error fetching pincode data", err);
         }
       }
     }

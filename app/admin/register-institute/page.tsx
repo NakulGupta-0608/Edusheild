@@ -41,6 +41,47 @@ export default function RegisterInstituteForm() {
   const [formData, setFormData] = useState(defaultFormData);
   const [ownerPhotoPreview, setOwnerPhotoPreview] = useState<string | null>(null);
 
+  // OTP Verification States
+  const [phoneOTP, setPhoneOTP] = useState("");
+  const [emailOTP, setEmailOTP] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneOTPSent, setPhoneOTPSent] = useState(false);
+  const [emailOTPSent, setEmailOTPSent] = useState(false);
+
+  const sendOTP = async (type: "Email" | "Phone", identifier: string) => {
+    if (!identifier) return alert(`Please enter your ${type}`);
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: type === "Email" ? "Email_Verification" : "Phone_Verification", identifier })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (type === "Email") setEmailOTPSent(true);
+        else setPhoneOTPSent(true);
+        alert(`OTP sent to ${identifier}`);
+      } else alert(data.error);
+    } catch { alert("Failed to send OTP"); }
+  };
+
+  const verifyOTP = async (type: "Email" | "Phone", identifier: string, code: string) => {
+    if (!code) return alert("Please enter the OTP");
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: type === "Email" ? "Email_Verification" : "Phone_Verification", identifier, code })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (type === "Email") setEmailVerified(true);
+        else setPhoneVerified(true);
+      } else alert(data.error);
+    } catch { alert("Failed to verify OTP"); }
+  };
+
   const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (!/^\d*$/.test(value)) return;
@@ -130,6 +171,11 @@ export default function RegisterInstituteForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!phoneVerified || !emailVerified) {
+      alert("Please verify both Email and Contact Number via OTP before registering.");
+      return;
+    }
+
     const allUndertakingsChecked = Object.values(formData.undertakings).every(v => v === true);
     if (!allUndertakingsChecked) {
       alert("All undertakings must be agreed to before registration.");
@@ -149,7 +195,6 @@ export default function RegisterInstituteForm() {
 
       if (response.ok) {
         setGeneratedId(data.data.instituteId);
-        setGeneratedPass(data.data.password);
         setSuccess(true);
       } else {
         alert(data.error || 'Failed to register institute');
@@ -244,35 +289,63 @@ export default function RegisterInstituteForm() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">
-                  Contact Number
-                </label>
-                <div className="mt-2">
-                  <input
-                    type="tel"
-                    required
-                    pattern="[0-9]{10}"
-                    maxLength={10}
-                    value={formData.ownerDetails.contact}
-                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, contact: e.target.value}})}
-                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
-                  />
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium leading-6 text-neutral-900">
+                    Contact Number
+                  </label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="tel"
+                      required
+                      disabled={phoneVerified}
+                      pattern="[0-9]{10}"
+                      maxLength={10}
+                      value={formData.ownerDetails.contact}
+                      onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, contact: e.target.value}})}
+                      className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm disabled:bg-neutral-100 disabled:text-neutral-500"
+                    />
+                    {!phoneVerified && (
+                      <button type="button" onClick={() => sendOTP("Phone", formData.ownerDetails.contact)} className="whitespace-nowrap rounded-md bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200">
+                        {phoneOTPSent ? "Resend OTP" : "Send OTP"}
+                      </button>
+                    )}
+                  </div>
+                  {phoneOTPSent && !phoneVerified && (
+                    <div className="mt-2 flex gap-2">
+                      <input type="text" placeholder="Enter OTP" maxLength={6} value={phoneOTP} onChange={(e) => setPhoneOTP(e.target.value)} className="block w-full rounded-md border-0 py-1.5 px-3 text-sm ring-1 ring-inset ring-neutral-300" />
+                      <button type="button" onClick={() => verifyOTP("Phone", formData.ownerDetails.contact, phoneOTP)} className="whitespace-nowrap rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">Verify</button>
+                    </div>
+                  )}
+                  {phoneVerified && <p className="mt-1 text-sm font-medium text-emerald-600 flex items-center gap-1"><CheckCircle2 className="h-4 w-4"/> Number Verified</p>}
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">
-                  Official Email Address
-                </label>
-                <div className="mt-2">
-                  <input
-                    type="email"
-                    required
-                    value={formData.ownerDetails.email}
-                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, email: e.target.value}})}
-                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
-                  />
+                <div>
+                  <label className="block text-sm font-medium leading-6 text-neutral-900">
+                    Official Email Address
+                  </label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      disabled={emailVerified}
+                      value={formData.ownerDetails.email}
+                      onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, email: e.target.value}})}
+                      className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm disabled:bg-neutral-100 disabled:text-neutral-500"
+                    />
+                    {!emailVerified && (
+                      <button type="button" onClick={() => sendOTP("Email", formData.ownerDetails.email)} className="whitespace-nowrap rounded-md bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200">
+                        {emailOTPSent ? "Resend OTP" : "Send OTP"}
+                      </button>
+                    )}
+                  </div>
+                  {emailOTPSent && !emailVerified && (
+                    <div className="mt-2 flex gap-2">
+                      <input type="text" placeholder="Enter OTP" maxLength={6} value={emailOTP} onChange={(e) => setEmailOTP(e.target.value)} className="block w-full rounded-md border-0 py-1.5 px-3 text-sm ring-1 ring-inset ring-neutral-300" />
+                      <button type="button" onClick={() => verifyOTP("Email", formData.ownerDetails.email, emailOTP)} className="whitespace-nowrap rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">Verify</button>
+                    </div>
+                  )}
+                  {emailVerified && <p className="mt-1 text-sm font-medium text-emerald-600 flex items-center gap-1"><CheckCircle2 className="h-4 w-4"/> Email Verified</p>}
                 </div>
               </div>
 
@@ -521,39 +594,27 @@ export default function RegisterInstituteForm() {
 
       ) : (
 
-        // SUCCESS STATE (Same as before)
+        // SUCCESS STATE (Pending Approval)
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-xl border border-emerald-200 bg-white p-8 shadow-sm text-center max-w-2xl mx-auto mt-12"
+          className="rounded-xl border border-indigo-200 bg-white p-8 shadow-sm text-center max-w-2xl mx-auto mt-12"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 mb-6">
-            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 mb-6">
+            <CheckCircle2 className="h-8 w-8 text-indigo-600" />
           </div>
-          <h3 className="text-2xl font-bold text-neutral-900 mb-2">Registration Completed</h3>
+          <h3 className="text-2xl font-bold text-neutral-900 mb-2">Application Submitted Successfully</h3>
           <p className="text-neutral-600 mb-8 px-4">
-            A secure ID and password have been generated for the coaching center. Share these credentials securely with the absolute owner.
+            Your application is now <strong className="text-amber-600">Pending Approval</strong> by the District Education Officer. 
+            Once approved, your secure Login ID and Password will be actively dispatched to your verified Email and Mobile Number.
           </p>
 
-          <div className="bg-neutral-50 rounded-xl p-6 border border-neutral-200 mb-8 text-left relative overflow-hidden group">
-            <button 
-              onClick={copyCredentials}
-              className="absolute top-4 right-4 p-2 bg-white border border-neutral-200 rounded text-neutral-500 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm flex items-center gap-2 text-xs font-semibold z-10"
-            >
-              {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-500"/> : <Copy className="h-4 w-4"/>}
-              {copied ? "Copied" : "Copy"}
-            </button>
-            
-            <div className="space-y-4 relative z-0">
-              <div>
-                <p className="text-xs font-semibold uppercase text-neutral-500 tracking-wider mb-1">Institute ID</p>
-                <p className="text-2xl font-mono font-bold text-neutral-900 bg-white inline-block px-3 py-1 rounded border border-neutral-200 select-all">{generatedId}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase text-neutral-500 tracking-wider mb-1">Temporary Password</p>
-                <p className="text-lg font-mono font-medium text-neutral-900 bg-white inline-block px-3 py-1 rounded border border-neutral-200 select-all">{generatedPass}</p>
-              </div>
+          <div className="bg-neutral-50 rounded-xl p-6 border border-neutral-200 mb-8 text-center relative overflow-hidden">
+            <div className="space-y-2 relative z-0">
+              <p className="text-xs font-semibold uppercase text-neutral-500 tracking-wider mb-1">Application Reference ID</p>
+              <p className="text-2xl font-mono font-bold text-neutral-900 bg-white inline-block px-3 py-1 rounded border border-neutral-200 select-all">{generatedId}</p>
             </div>
+            <p className="text-xs text-neutral-400 mt-4">Save this reference ID to track your application status.</p>
           </div>
 
           <div className="flex gap-4 justify-center">
@@ -562,16 +623,19 @@ export default function RegisterInstituteForm() {
                 setSuccess(false);
                 setFormData(defaultFormData);
                 setOwnerPhotoPreview(null);
+                setPhoneOTP(""); setEmailOTP("");
+                setPhoneVerified(false); setEmailVerified(false);
+                setPhoneOTPSent(false); setEmailOTPSent(false);
               }}
               className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-6 py-2.5 rounded-lg transition-colors"
             >
-              Register Another
+              Submit Another Application
             </button>
             <Link 
-              href="/admin/dashboard"
+              href="/"
               className="flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-lg transition-colors"
             >
-              Back to Dashboard <ArrowRight className="h-4 w-4" />
+              Back to Home <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </motion.div>

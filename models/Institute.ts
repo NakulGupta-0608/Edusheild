@@ -53,6 +53,11 @@ const InstituteSchema = new mongoose.Schema({
     enum: ['SAFE', 'WARNING', 'UNSAFE', 'PENDING_REGISTRATION'],
     default: 'PENDING_REGISTRATION'
   },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
   registrationDate: { type: Date, default: Date.now },
   expiryDate: { type: Date }
 }, {

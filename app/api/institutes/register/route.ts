@@ -51,12 +51,13 @@ export async function POST(req: Request) {
 
     await newInstitute.save();
 
-    // 4. Return plain credentials to admin
+    // 4. Return plain credentials to admin -> Actually, we are NOT returning plain credentials anymore.
+    // We just return success and tell them it's pending.
     return NextResponse.json({ 
       success: true, 
+      message: "Registration successful. Pending District Admin Approval. Your credentials will be sent via Email/SMS once approved.",
       data: {
-        instituteId: newId,
-        password: plainPassword
+        instituteId: newId
       } 
     }, { status: 201 });
 

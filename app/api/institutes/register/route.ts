@@ -10,17 +10,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { 
       name, 
-      ownerName, 
-      email, 
-      contact, 
+      ownerDetails, 
       address, 
       infrastructure, 
-      facilities, 
+      facilities,
+      safetyCertificates,
+      undertakings,
       capacity 
     } = body;
 
     // Basic validation
-    if (!name || !ownerName || !email || !contact || !address || !capacity) {
+    if (!name || !ownerDetails || !ownerDetails.name || !ownerDetails.email || !ownerDetails.contact || !address || !capacity) {
       return NextResponse.json(
         { success: false, error: 'Mandatory fields are missing' },
         { status: 400 }
@@ -40,14 +40,12 @@ export async function POST(req: Request) {
       instituteId: newId,
       name,
       password: hashedPassword,
-      ownerDetails: {
-        name: ownerName,
-        email,
-        contact
-      },
+      ownerDetails,
       address,
       infrastructure,
       facilities,
+      safetyCertificates: safetyCertificates || [],
+      undertakings,
       capacity
     });
 

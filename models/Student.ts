@@ -5,6 +5,7 @@ const StudentSchema = new mongoose.Schema({
   instituteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute', required: true },
   name: { type: String, required: true },
   age: { type: Number, required: true },
+  photoUrl: { type: String }, // User requested mock photo upload
   qualification: { type: String, required: true },
   courseEnrolled: { type: String, required: true },
   enrollmentDate: { type: Date, default: Date.now },

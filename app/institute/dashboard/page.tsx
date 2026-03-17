@@ -144,18 +144,16 @@ export default function InstituteDashboard() {
               />
             </div>
             
-            {/* Warning Message if needed */}
-            {(isNearCapacity || isOverCapacity) && (
-              <div className={`mt-4 flex items-start gap-3 p-3 rounded-lg ${isOverCapacity ? 'bg-red-50 text-red-800 border border-red-100' : 'bg-amber-50 text-amber-800 border border-amber-100'}`}>
-                <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <span className="font-semibold block mb-0.5">Capacity Warning</span>
-                  {isOverCapacity 
-                    ? "You have exceeded your maximum allowed students based on your infrastructure size. Please halt admissions immediately to avoid penalization."
-                    : "You are approaching your maximum capacity. Remember that exceeding the limit will trigger an automatic flag to the authorities."}
-                </div>
+            {/* Warning Message */}
+            <div className={`mt-4 flex items-start gap-3 p-3 rounded-lg ${isOverCapacity ? 'bg-red-50 text-red-800 border border-red-100' : 'bg-emerald-50 text-emerald-800 border border-emerald-100'}`}>
+              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <span className="font-semibold block mb-0.5">{isOverCapacity ? 'DANGER: Exceeds Approved Capacity! Violation Risk' : 'Safe: Within Approved Limit'}</span>
+                {isOverCapacity 
+                  ? "You have exceeded your maximum allowed students based on your infrastructure size. Please halt admissions immediately to avoid penalization."
+                  : "Your institute's active enrollments are compliant with the 1 sq.m per student rule."}
               </div>
-            )}
+            </div>
           </div>
         </motion.div>
 

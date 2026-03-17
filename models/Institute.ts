@@ -7,16 +7,19 @@ const InstituteSchema = new mongoose.Schema({
   ownerDetails: {
     name: { type: String },
     contact: { type: String },
-    email: { type: String }
+    email: { type: String },
+    aadhaarPan: { type: String },
+    photoUrl: { type: String }
   },
   address: {
     street: { type: String },
+    areaLocality: { type: String },
     city: { type: String },
-    state: { type: String },
+    state: { type: String, default: 'Uttar Pradesh' },
     pincode: { type: String }
   },
   infrastructure: {
-    totalArea: { type: Number }, // in sq ft
+    totalArea: { type: Number }, // in sq m
     totalClassrooms: { type: Number },
     classroomDimensions: { type: String } // e.g., "20x30, 25x30"
   },
@@ -24,13 +27,23 @@ const InstituteSchema = new mongoose.Schema({
     drinkingWater: { type: Boolean, default: false },
     separateToilets: { type: Boolean, default: false },
     cctvInstalled: { type: Boolean, default: false },
-    firstAid: { type: Boolean, default: false }
+    firstAid: { type: Boolean, default: false },
+    ventilation: { type: Boolean, default: false },
+    emergencyExits: { type: Boolean, default: false },
+    facilityPhotos: [{ type: String }]
   },
   safetyCertificates: [{
     url: { type: String },
     type: { type: String, enum: ['Fire', 'Building', 'Other'] },
     aiVerificationStatus: { type: String, enum: ['Pending', 'Verified', 'Failed'], default: 'Pending' }
   }],
+  undertakings: {
+    noUnder16: { type: Boolean, default: false },
+    noSchoolHours: { type: Boolean, default: false },
+    graduateTutors: { type: Boolean, default: false },
+    noMisleadingAds: { type: Boolean, default: false },
+    oneSqMeterRule: { type: Boolean, default: false }
+  },
   capacity: {
     maxAllowed: { type: Number, default: 0 },
     currentlyEnrolled: { type: Number, default: 0 }

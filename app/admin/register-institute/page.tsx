@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Building2, User, KeyRound, CheckCircle2, ArrowRight } from "lucide-react";
+import { Copy, Building2, User, KeyRound, CheckCircle2, ArrowRight, ShieldCheck, Upload } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -13,22 +13,35 @@ export default function RegisterInstituteForm() {
   const [copied, setCopied] = useState(false);
   
   const defaultFormData = {
-    name: "",
-    ownerName: "",
-    email: "",
-    contact: "",
-    address: { street: "", city: "", state: "", pincode: "" },
-    infrastructure: { totalArea: "", totalClassrooms: "", classroomDimensions: "" },
-    facilities: { drinkingWater: false, separateToilets: false, cctvInstalled: false, firstAid: false },
-    capacity: { maxAllowed: "" }
+    name: "Registered Coaching Center",
+    ownerDetails: {
+      name: "",
+      email: "",
+      contact: "",
+      aadhaarPan: "",
+      photoUrl: ""
+    },
+    address: { street: "", areaLocality: "", city: "", state: "Uttar Pradesh", pincode: "" },
+    infrastructure: { totalArea: 0, totalClassrooms: 0, classroomDimensions: "" },
+    facilities: { drinkingWater: false, separateToilets: false, cctvInstalled: false, firstAid: false, ventilation: false, emergencyExits: false, facilityPhotos: [] as string[] },
+    safetyCertificates: [
+      { type: 'Fire', url: 'mock_fire_cert.pdf', aiVerificationStatus: 'Pending' },
+      { type: 'Building', url: 'mock_building_cert.pdf', aiVerificationStatus: 'Pending' }
+    ],
+    undertakings: {
+      noUnder16: false,
+      noSchoolHours: false,
+      graduateTutors: false,
+      noMisleadingAds: false,
+      oneSqMeterRule: false
+    },
+    capacity: { maxAllowed: 0 }
   };
 
-  // Form State
   const [formData, setFormData] = useState(defaultFormData);
 
   const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only digits
     if (!/^\d*$/.test(value)) return;
     
     setFormData(prev => ({
@@ -47,7 +60,7 @@ export default function RegisterInstituteForm() {
             address: {
               ...prev.address,
               city: postOffice.District || postOffice.Block || postOffice.Name,
-              state: postOffice.State,
+              state: postOffice.State || "Uttar Pradesh",
               pincode: value
             }
           }));
@@ -58,8 +71,24 @@ export default function RegisterInstituteForm() {
     }
   };
 
+  const handleAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const area = Number(e.target.value) || 0;
+    setFormData(prev => ({
+      ...prev,
+      infrastructure: { ...prev.infrastructure, totalArea: area },
+      capacity: { maxAllowed: area } // 1 sq.m per student rule
+    }));
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const allUndertakingsChecked = Object.values(formData.undertakings).every(v => v === true);
+    if (!allUndertakingsChecked) {
+      alert("All undertakings must be agreed to before registration.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -92,13 +121,17 @@ export default function RegisterInstituteForm() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const mockUpload = (field: string) => {
+    alert(`Mock Upload triggered for ${field}. In production, this uploads to secure storage.`);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 pb-12">
       
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-neutral-900">Register New Coaching Center</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-neutral-900">Registration of Coaching Institute</h2>
         <p className="text-neutral-500 mt-1 max-w-2xl">
-          As per the Ministry guidelines, you must create an initial record for the institute. They will use the generated credentials to log in and upload their required compliance details.
+          Complete this detailed registration form in accordance with the 2024 Ministry Guidelines. All fields are mandatory.
         </p>
       </div>
 
@@ -114,17 +147,16 @@ export default function RegisterInstituteForm() {
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium leading-6 text-neutral-900 flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-neutral-400" />
-                  Institute Legal Name
+                  Institute Display Name
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
-                    required
+                    disabled
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="e.g. Pinnacle Classes"
-                    className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-600 bg-neutral-100 shadow-sm ring-1 ring-inset ring-neutral-200 sm:text-sm sm:leading-6 cursor-not-allowed"
                   />
+                  <p className="mt-1 text-xs text-neutral-500">As per new guidelines, names are anonymized publicly.</p>
                 </div>
               </div>
 
@@ -142,9 +174,25 @@ export default function RegisterInstituteForm() {
                   <input
                     type="text"
                     required
-                    value={formData.ownerName}
-                    onChange={(e) => setFormData({...formData, ownerName: e.target.value})}
-                    className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    value={formData.ownerDetails.name}
+                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, name: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">
+                  Aadhaar / PAN Number
+                </label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.ownerDetails.aadhaarPan}
+                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, aadhaarPan: e.target.value}})}
+                    placeholder="XXXX-XXXX-XXXX"
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
               </div>
@@ -159,15 +207,14 @@ export default function RegisterInstituteForm() {
                     required
                     pattern="[0-9]{10}"
                     maxLength={10}
-                    title="Please enter exactly 10 digits"
-                    value={formData.contact}
-                    onChange={(e) => setFormData({...formData, contact: e.target.value})}
-                    className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    value={formData.ownerDetails.contact}
+                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, contact: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <label className="block text-sm font-medium leading-6 text-neutral-900">
                   Official Email Address
                 </label>
@@ -175,13 +222,21 @@ export default function RegisterInstituteForm() {
                   <input
                     type="email"
                     required
-                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                    title="Please enter a valid email address"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="block w-full rounded-md border-0 py-2.5 px-3.5 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    value={formData.ownerDetails.email}
+                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, email: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
+              </div>
+
+              <div className="sm:col-span-2 flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg">
+                <div>
+                  <h4 className="text-sm font-medium text-neutral-900">Owner Passport Photo</h4>
+                  <p className="text-xs text-neutral-500 mt-1">Clear recent photograph max 2MB</p>
+                </div>
+                <button type="button" onClick={() => mockUpload('Photo')} className="px-4 py-2 bg-neutral-100 text-sm font-medium rounded-md hover:bg-neutral-200">
+                  Upload Image
+                </button>
               </div>
 
               <div className="sm:col-span-2">
@@ -202,27 +257,14 @@ export default function RegisterInstituteForm() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">City</label>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Area / Locality</label>
                 <div className="mt-2">
                   <input
                     type="text"
                     required
-                    value={formData.address.city}
-                    onChange={(e) => setFormData({...formData, address: {...formData.address, city: e.target.value}})}
-                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">State</label>
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    required
-                    value={formData.address.state}
-                    onChange={(e) => setFormData({...formData, address: {...formData.address, state: e.target.value}})}
+                    value={formData.address.areaLocality}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, areaLocality: e.target.value}})}
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>
@@ -236,9 +278,34 @@ export default function RegisterInstituteForm() {
                     required
                     pattern="[0-9]{6}"
                     maxLength={6}
-                    title="Please enter a valid 6-digit pincode"
                     value={formData.address.pincode}
                     onChange={handlePincodeChange}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">City / District</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.address.city}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, city: e.target.value}})}
+                    className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium leading-6 text-neutral-900">State</label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    required
+                    value={formData.address.state}
+                    onChange={(e) => setFormData({...formData, address: {...formData.address, state: e.target.value}})}
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>
@@ -250,56 +317,128 @@ export default function RegisterInstituteForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">Total Area (sq ft)</label>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Number of Classrooms</label>
                 <div className="mt-2">
                   <input
                     type="number"
-                    min="0"
+                    min="1"
                     required
-                    value={formData.infrastructure.totalArea}
-                    onChange={(e) => setFormData({...formData, infrastructure: {...formData.infrastructure, totalArea: e.target.value}})}
+                    value={formData.infrastructure.totalClassrooms}
+                    onChange={(e) => setFormData({...formData, infrastructure: {...formData.infrastructure, totalClassrooms: Number(e.target.value)}})}
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium leading-6 text-neutral-900">Max Allowed Students (Capacity)</label>
+                <label className="block text-sm font-medium leading-6 text-neutral-900">Total Classroom Area (sq.m)</label>
                 <div className="mt-2">
                   <input
                     type="number"
                     min="1"
                     required
-                    value={formData.capacity.maxAllowed}
-                    onChange={(e) => setFormData({...formData, capacity: {maxAllowed: e.target.value}})}
+                    value={formData.infrastructure.totalArea}
+                    onChange={handleAreaChange}
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 sm:text-sm"
                   />
                 </div>
               </div>
+
+              <div className="sm:col-span-2 bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex justify-between items-center">
+                <div>
+                  <h4 className="text-sm font-bold text-indigo-900">Auto-Calculated Approved Max Capacity</h4>
+                  <p className="text-xs text-indigo-700">Calculated strictly as Area (sq.m) ÷ 1</p>
+                </div>
+                <div className="text-3xl font-black text-indigo-600 px-4 py-2 bg-white rounded-lg shadow-sm">
+                  {formData.capacity.maxAllowed}
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Mandatory Certificate Uploads</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer" onClick={() => mockUpload('Fire Safety')}>
+                    <span className="text-sm font-medium text-neutral-700">Fire Safety Certificate (PDF)</span>
+                    <Upload className="h-4 w-4 text-neutral-500" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 border border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer" onClick={() => mockUpload('Building Safety')}>
+                    <span className="text-sm font-medium text-neutral-700">Building Safety Certificate (PDF)</span>
+                    <Upload className="h-4 w-4 text-neutral-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Mandatory Facilities</h3>
+                <div className="grid grid-cols-2 gap-4 border border-neutral-200 rounded-lg p-5 bg-white">
+                  {['First Aid', 'CCTV', 'Ventilation', 'Separate Toilets', 'Emergency Exits'].map((facility, i) => {
+                    const keys = ['firstAid', 'cctvInstalled', 'ventilation', 'separateToilets', 'emergencyExits'] as const;
+                    const key = keys[i];
+                    return (
+                      <div key={key} className="flex items-center justify-between">
+                        <label className="flex items-center gap-3 text-sm text-neutral-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-600"
+                            checked={formData.facilities[key]}
+                            onChange={(e) => setFormData({...formData, facilities: {...formData.facilities, [key]: e.target.checked}})}
+                          />
+                          {facility} Required
+                        </label>
+                        <button type="button" onClick={() => mockUpload(`${facility} Photo`)} className="text-xs text-indigo-600 hover:text-indigo-800 underline">Add Photo</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <hr className="border-neutral-100 my-2" />
+                <h3 className="text-sm font-semibold text-red-700 mt-4 mb-2 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" />
+                  Statutory Undertakings
+                </h3>
+                <div className="space-y-4 bg-red-50/50 p-5 rounded-lg border border-red-100">
+                  <label className="flex items-start gap-3 text-sm text-neutral-800 cursor-pointer">
+                    <input type="checkbox" required className="mt-1 h-4 w-4" checked={formData.undertakings.noUnder16} onChange={(e) => setFormData({...formData, undertakings: {...formData.undertakings, noUnder16: e.target.checked}})} />
+                    I undertake that the institute will NOT enroll any student below 16 years of age.
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-neutral-800 cursor-pointer">
+                    <input type="checkbox" required className="mt-1 h-4 w-4" checked={formData.undertakings.noSchoolHours} onChange={(e) => setFormData({...formData, undertakings: {...formData.undertakings, noSchoolHours: e.target.checked}})} />
+                    I undertake that classes will NOT be conducted during regular school hours.
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-neutral-800 cursor-pointer">
+                    <input type="checkbox" required className="mt-1 h-4 w-4" checked={formData.undertakings.graduateTutors} onChange={(e) => setFormData({...formData, undertakings: {...formData.undertakings, graduateTutors: e.target.checked}})} />
+                    I undertake that all tutors hold a minimum of a graduation degree.
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-neutral-800 cursor-pointer">
+                    <input type="checkbox" required className="mt-1 h-4 w-4" checked={formData.undertakings.noMisleadingAds} onChange={(e) => setFormData({...formData, undertakings: {...formData.undertakings, noMisleadingAds: e.target.checked}})} />
+                    I undertake that the institute will not publish misleading advertisements.
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-neutral-800 cursor-pointer">
+                    <input type="checkbox" required className="mt-1 h-4 w-4" checked={formData.undertakings.oneSqMeterRule} onChange={(e) => setFormData({...formData, undertakings: {...formData.undertakings, oneSqMeterRule: e.target.checked}})} />
+                    I undertake to strictly follow the minimum 1 sq.m per student per classroom rule.
+                  </label>
+                </div>
+              </div>
+
             </div>
 
             <div className="mt-8 pt-6 border-t border-neutral-100 flex items-center justify-end gap-x-4">
               <button
-                type="button"
-                className="text-sm font-semibold leading-6 text-neutral-900 px-4 py-2 hover:bg-neutral-50 rounded-md transition-colors"
-                onClick={() => setFormData(defaultFormData)}
-              >
-                Reset
-              </button>
-              <button
                 type="submit"
                 disabled={loading}
-                className="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70 flex items-center gap-2 transition-all"
+                className="w-full sm:w-auto rounded-md bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70 flex justify-center items-center gap-2 transition-all"
               >
                 {loading ? (
                   <>
                     <div className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
-                    Generating...
+                    Processing Protocol...
                   </>
                 ) : (
                   <>
                     <KeyRound className="h-4 w-4" />
-                    Generate Institute Identity
+                    Submit Formal Registration
                   </>
                 )}
               </button>
@@ -310,6 +449,7 @@ export default function RegisterInstituteForm() {
 
       ) : (
 
+        // SUCCESS STATE (Same as before)
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -318,13 +458,12 @@ export default function RegisterInstituteForm() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 mb-6">
             <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
-          <h3 className="text-2xl font-bold text-neutral-900 mb-2">Registration Initialized</h3>
+          <h3 className="text-2xl font-bold text-neutral-900 mb-2">Registration Completed</h3>
           <p className="text-neutral-600 mb-8 px-4">
-            A temporary ID and password have been generated for <strong className="text-neutral-900">{formData.name}</strong>. Share these credentials securely with the absolute owner.
+            A secure ID and password have been generated for the coaching center. Share these credentials securely with the absolute owner.
           </p>
 
           <div className="bg-neutral-50 rounded-xl p-6 border border-neutral-200 mb-8 text-left relative overflow-hidden group">
-            {/* Copy Button */}
             <button 
               onClick={copyCredentials}
               className="absolute top-4 right-4 p-2 bg-white border border-neutral-200 rounded text-neutral-500 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm flex items-center gap-2 text-xs font-semibold z-10"

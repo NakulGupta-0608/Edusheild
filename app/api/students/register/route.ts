@@ -20,16 +20,16 @@ export async function POST(req: Request) {
 
     const instituteIdStr = (session.user as any).instituteId;
     
-    // Fetch institute to check capacity and get ObjectId
     const institute = await Institute.findOne({ instituteId: instituteIdStr });
     if (!institute) {
       return NextResponse.json({ success: false, error: 'Institute not found' }, { status: 404 });
     }
 
-    const { name, dob, qualification, course, guardianName, guardianContact } = await req.json();
+    const { name, email, dob, qualification, course, guardianName, guardianContact, photoUrl } = await req.json();
 
-    if (!name || !dob || !qualification || !course) {
-      return NextResponse.json({ success: false, error: 'Missing required student details' }, { status: 400 });
+    // ✅ Validate email is present
+    if (!name || !email || !dob || !qualification || !course) {
+      return NextResponse.json({ success: false, error: 'Missing required student details including email' }, { status: 400 });
     }
 
     // Capacity Check
@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     
     if (currentlyEnrolled >= maxAllowed && maxAllowed > 0) {
       return NextResponse.json(
-        { success: false, error: `Capacity Exceeded: Your maximum allowed capacity is ${maxAllowed}. You cannot enroll more students until capacity is expanded.` },
-        { status: 403 } // Forbidden
+        { success: false, error: `Capacity Exceeded: Your maximum allowed capacity is ${maxAllowed}. You cannot enroll more students.` },
+        { status: 403 }
       );
     }
 
@@ -49,11 +49,11 @@ export async function POST(req: Request) {
       studentId,
       instituteId: institute._id,
       name,
-      // We will parse dob on frontend to check age, but let's just store DOB as age isn't directly on model or calculate roughly.
-      // Wait, the schema has `age`, not `dob`. Let's calculate age.
+      email,  // ✅ Save verified email to MongoDB
       age: calculateAge(new Date(dob)),
       qualification,
       courseEnrolled: course,
+      photoUrl: photoUrl || '',
       guardianDetails: {
         name: guardianName,
         contact: guardianContact

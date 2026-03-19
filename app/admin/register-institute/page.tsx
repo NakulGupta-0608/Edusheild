@@ -263,17 +263,25 @@ export default function RegisterInstituteForm() {
 
               <div>
                 <label className="block text-sm font-medium leading-6 text-neutral-900">
-                  Aadhaar / PAN Number
+                  Aadhaar Card Number <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
                     required
+                    maxLength={12}
+                    pattern="[0-9]{12}"
                     value={formData.ownerDetails.aadhaarPan}
-                    onChange={(e) => setFormData({...formData, ownerDetails: {...formData.ownerDetails, aadhaarPan: e.target.value}})}
-                    placeholder="XXXX-XXXX-XXXX"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      setFormData({...formData, ownerDetails: {...formData.ownerDetails, aadhaarPan: val}});
+                    }}
+                    placeholder="12-digit Aadhaar number"
                     className="block w-full rounded-md border-0 py-2 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Enter exactly 12 digits ({formData.ownerDetails.aadhaarPan.length}/12)
+                  </p>
                 </div>
               </div>
 

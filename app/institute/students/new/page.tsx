@@ -28,7 +28,7 @@ export default function RegisterStudent() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const handleAadhaarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+    const val = e.target.value.replace(/\D/g, "").slice(0, 12); // ✅ digits only, max 12
     setFormData(prev => ({ ...prev, aadhaarNumber: val }));
     
     // Mock Aadhaar DOB Extraction
@@ -217,16 +217,22 @@ export default function RegisterStudent() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-900 mb-2 flex items-center gap-2">
-                  Aadhaar Number (Auto-extracts DOB)
+                  Aadhaar Number <span className="text-red-500">*</span> (Auto-extracts DOB)
                 </label>
                 <input
                   type="text"
+                  required
                   maxLength={12}
+                  pattern="[0-9]{12}"
                   value={formData.aadhaarNumber}
                   onChange={handleAadhaarChange}
                   className="w-full rounded-md border text-slate-900 py-2.5 px-3 border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="12 Digit Aadhaar"
+                  placeholder="Enter 12-digit Aadhaar number"
                 />
+                <p className="mt-1 text-xs text-slate-500">
+                  Must be exactly 12 digits ({formData.aadhaarNumber.length}/12)
+                  {formData.aadhaarNumber.length === 12 && <span className="text-emerald-600 font-medium ml-1">✓ Valid</span>}
+                </p>
               </div>
 
               <div>

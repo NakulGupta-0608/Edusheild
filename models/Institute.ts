@@ -6,10 +6,11 @@ const InstituteSchema = new mongoose.Schema({
   password: { type: String, required: true },
   ownerDetails: {
     name: { type: String },
-    contact: { type: String },
-    email: { type: String },
+    contact: { type: String },       // ✅ 10-digit mobile
+    email: { type: String },         // Owner email (verified via OTP)
+    studentEmail: { type: String },  // ✅ NEW: Student/institute email (verified via OTP)
     aadhaarPan: { type: String },
-    photoUrl: { type: String }
+    photoUrl: { type: String }       // ✅ Owner photo URL from upload
   },
   address: {
     street: { type: String },
@@ -19,9 +20,9 @@ const InstituteSchema = new mongoose.Schema({
     pincode: { type: String }
   },
   infrastructure: {
-    totalArea: { type: Number }, // in sq m
+    totalArea: { type: Number },
     totalClassrooms: { type: Number },
-    classroomDimensions: { type: String } // e.g., "20x30, 25x30"
+    classroomDimensions: { type: String }
   },
   facilities: {
     drinkingWater: { type: Boolean, default: false },
@@ -30,10 +31,10 @@ const InstituteSchema = new mongoose.Schema({
     firstAid: { type: Boolean, default: false },
     ventilation: { type: Boolean, default: false },
     emergencyExits: { type: Boolean, default: false },
-    facilityPhotos: [{ type: String }]
+    facilityPhotos: [{ type: String }]  // ✅ Array of uploaded photo URLs
   },
   safetyCertificates: [{
-    url: { type: String },
+    url: { type: String },           // ✅ Uploaded certificate URL
     type: { type: String, enum: ['Fire', 'Building', 'Other'] },
     aiVerificationStatus: { type: String, enum: ['Pending', 'Verified', 'Failed'], default: 'Pending' }
   }],
